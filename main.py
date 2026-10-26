@@ -1,6 +1,76 @@
-def main():
-    print("Hello from projeto-analyze!")
+
+import duckdb
+import pandas as pd
+import config   
 
 
-if __name__ == "__main__":
-    main()
+con = duckdb.connect()
+con.execute("INSTALL excel")
+con.execute("LOAD excel")
+
+# fonte comum para todas as consultas.
+# O arquivo Excel continua sendo a fonte de dados, mas agora podemos usar o DuckDB para consultar os dados de forma mais eficiente.
+
+fonte = f"""
+read_excel("{config.Input.as_posix()}",
+           sheet='Vendas')
+"""
+
+consultas = {
+    "Resumo": f"""
+    SELECT
+        COUNT(*) AS quantidade_registros,
+        SUM(Quantidade) AS unidades_vendidas,
+        SUM(Valor_Total) AS faturamento,
+        AVG(Valor_Total) AS ticket_medio
+    FROM {fonte}
+    """,
+
+    "Top_10_Clientes": f"""
+    SELECT Cliente,
+             SUM(Valor_Total) AS faturamento
+    FROM {fonte}
+    GROUP BY Cliente
+    ORDER BY faturamento DESC
+    LIMIT 10
+    """,
+
+    "Menor_Faturamento": f"""
+    SELECT Cliente,
+             SUM(Valor_Total) AS faturamento
+    FROM {fonte}
+    GROUP BY Cliente
+    ORDER BY faturamento ASC
+    LIMIT 10
+    """,
+    "Produtos_Mais_Vendidos": f"""
+    SELECT Produto,
+             SUM(Quantidade) AS unidades_vendidas
+    FROM {fonte}
+    GROUP BY Produto
+    ORDER BY unidades_vendidas DESC
+    LIMIT 10
+    """,
+
+    "Faturamento_Por_Mes": f"""
+            SELECT
+                DATE_TRUNC('month', CAST(Data AS DATE)) AS mes,
+                SUM(Valor_Total) AS faturamento
+            FROM {fonte}
+            GROUP BY mes
+            ORDER BY mes
+    """,
+}
+
+
+# Executa cada consulta e cria uma aba no excel
+with pd.ExcelWriter(config.Output, engine="openpyxl")as writer:
+    for aba, consulta in consultas.items():
+        df = con.execute(consulta).fetchdf()
+        df.to_excel(
+            writer,
+            sheet_name=aba,
+            index=False)
+
+con.close()
+print("Arquivo de saída gerado com sucesso:", config.Output)
