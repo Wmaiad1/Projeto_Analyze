@@ -4,15 +4,15 @@ import pandas as pd
 import config   
 
 
-con = duckdb.connect()
-con.execute("INSTALL excel")
-con.execute("LOAD excel")
+con = duckdb.connect() # Cria uma conexão DuckDB
+con = con.execute("Install Excel")  
+con = con.execute("Load Excel")  # Instala e carrega o módulo excel do DuckDB
 
 # fonte comum para todas as consultas.
 # O arquivo Excel continua sendo a fonte de dados, mas agora podemos usar o DuckDB para consultar os dados de forma mais eficiente.
 
 fonte = f"""
-read_excel("{config.Input.as_posix()}",
+read_excel('{config.Input.as_posix()}',
            sheet='Vendas')
 """
 
@@ -43,6 +43,7 @@ consultas = {
     ORDER BY faturamento ASC
     LIMIT 10
     """,
+
     "Produtos_Mais_Vendidos": f"""
     SELECT Produto,
              SUM(Quantidade) AS unidades_vendidas
