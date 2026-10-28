@@ -5,16 +5,14 @@ import config
 
 
 con = duckdb.connect()
+
 con.execute("INSTALL excel")
 con.execute("LOAD excel")
 
 # fonte comum para todas as consultas.
 # O arquivo Excel continua sendo a fonte de dados, mas agora podemos usar o DuckDB para consultar os dados de forma mais eficiente.
-
-fonte = f"""
-read_excel("{config.Input.as_posix()}",
-           sheet='Vendas')
-"""
+arquivo = config.Input.as_posix()
+fonte = f"read_xlsx({arquivo}, sheet='Vendas', header=True)"
 
 consultas = {
     "Resumo": f"""
