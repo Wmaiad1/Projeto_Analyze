@@ -1,18 +1,26 @@
-
+# %%
 import duckdb
 import pandas as pd
 import config   
 
 
-con = duckdb.connect()
+con = duckdb.connect() # Cria uma conexão DuckDB
+
+print("Versao:", duckdb.__version__)
+
 
 con.execute("INSTALL excel")
 con.execute("LOAD excel")
 
+print("Módulo Excel instalado e carregado com sucesso.")
+
 # fonte comum para todas as consultas.
 # O arquivo Excel continua sendo a fonte de dados, mas agora podemos usar o DuckDB para consultar os dados de forma mais eficiente.
-arquivo = config.Input.as_posix()
-fonte = f"read_xlsx({arquivo}, sheet='Vendas', header=True)"
+
+
+
+arquivo = config.Input.as_posix().replace("'", "''")
+fonte = f"read_xlsx('{arquivo}', sheet='Vendas', header=true)"
 
 consultas = {
     "Resumo": f"""
